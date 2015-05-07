@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!-- Тег meta для указания кодировки -->
+  <meta charset="utf-8">
+  <script src="lesson_01.js"></script>
+</head>
+<body>
+  <script>
+  	"use strict";
+	var generator = sequence(10, 3);
+	var generator2 = sequence(7, 1);
+
+	console.log(generator()); // 10
+	console.log(generator()); // 13
+
+	console.log(generator2()); // 7
+
+	console.log(generator()); // 16
+
+	console.log(generator2()); // 8
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!-- Тег meta для указания кодировки -->
+  <meta charset="utf-8">
+  <script src="lesson_04.js"></script>
+</head>
+<body>
+  <script>
+    "use strict";
+    function add(a, b) { 
+        return a + b; 
+    }
+    function square(x) { return x * x; }
+    
+        // Мы получаем новую функцию, которая вызвает add, и результат пропускает через функцию square
+        var squareAdd = fmap(square, add);
+        console.log(squareAdd(2, 3)); // 25 = (2 + 3) ^ 2
+        console.log(squareAdd(5, 7)); // 144 = (5 + 7) ^ 2
+  </script>
+</body>
+</html>

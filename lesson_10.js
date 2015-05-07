@@ -1,4 +1,8 @@
 "use strict";
 function count (obj) {
-  // здесь ваш код
+   var j = 0;
+    for(var i in obj) {
+        j++;
+    }
+    return j;
 }

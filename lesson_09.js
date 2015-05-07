@@ -7,5 +7,5 @@ function filter (arr, fn) {
         };
         i++;
     }
-  return g;
+    return g;
 }

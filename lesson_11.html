@@ -89,22 +89,13 @@
     //перенос городов из таблицы в массив
     for (var i = 1; i < table.rows.length; i++) {
       var cell = [];
-      cell.push(getName(table, i));
-      cell.push(+getPopulation(table, i));
+      cell['name'] = getName(table, i);
+      cell['population'] = parseFloat(getPopulation(table, i));
       list.push(cell);
-    }
 
-    //сортировка по убыванию населения
-    var row;
-    for (var i = 1; i < list.length; i++) {
-      for (var j = 1; j < list.length; j++) {
-        if (list[j-1]['1'] < list[j]['1']){
-          row = list[j-1];
-          list[j-1] = list[j];
-          list[j] = row;
-        };
-      }
     }
+    //сортировка по убыванию населения
+    list.sort(sortFunction);
 
     for (var i = 0; i < list.length; i++) {
       console.log(list[i]);

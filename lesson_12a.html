@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!-- Тег meta для указания кодировки -->
+  <meta charset="utf-8">
+  <script src="lesson_12a.js"></script>
+
+</head>
+<body>
+  <script>
+    var SMAL = {price: 50, calories: 20};
+    var LARGE = {price: 100, calories: 40};
+
+    var CHEESE = {price: 10, calories: 20};
+    var SALAD = {price: 20, calories: 5};
+    var POTATOES = {price: 15, calories: 10};
+
+    var SPICE = {price: 15, calories: 0};
+    var MAYONNAISE = {price: 20, calories: 5};
+
+
+    var hamburger = new Humburger('LARGE', 'CHEESE', true, true);
+    alert('Калорий в гамбургере ' + hamburger.getCalories());
+    alert('Цена гамбургера ' + hamburger.getPrice());
+
+    var hamburger2 = new Humburger('LARGE', 'CHEESE');
+    alert('Калорий в гамбургере ' + hamburger2.getCalories());
+    alert('Цена гамбургера ' + hamburger2.getPrice());
+  </script>
+</body>
+

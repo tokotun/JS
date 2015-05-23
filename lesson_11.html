@@ -85,6 +85,7 @@
   <script>
     var list = [];
     var table = document.body.children[0];
+    var n = 4 //вывести n первыъъ городов
     
     //перенос городов из таблицы в массив
     for (var i = 1; i < table.rows.length; i++) {
@@ -97,7 +98,7 @@
     //сортировка по убыванию населения
     list.sort(sortFunction);
 
-    for (var i = 0; i < list.length; i++) {
+    for (var i = 0; i < n; i++) {
       console.log(list[i]);
     }
   </script>

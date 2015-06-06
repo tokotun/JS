@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!-- Тег meta для указания кодировки -->
+  <meta charset="utf-8">
+  <script src="lesson_13.js"></script>
+
+</head>
+<body>
+  <script> 
+
+    var powerhouses = new Powerhouses(5,10);
+
+    var solarPanels = new SolarPanels(5,3,5);
+
+    var houses = new Houses(2,5); 
+
+    //power положительное значение означает избыток энергии на линии. Линия энергию продаёт
+    //power отрицательное значение означает недостаток энергии на линии. Линия энергию покупает
+    var powerLines = new PowerLines({power: 30, price: 5}, {power: -10, price: 3}, {power: 15, price: 3});
+
+
+    var electricGrid = new ElectricGrid(powerhouses, solarPanels, houses, powerLines);
+
+    console.log(electricGrid);
+    //alert(electricGrid.getFreeEnergyDay());
+    //alert(electricGrid.getFreeEnergyNight());
+    alert(electricGrid.sellFreeEnergyNight());
+
+  </script>
+</body>
+

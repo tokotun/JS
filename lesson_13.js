@@ -1,48 +1,128 @@
 "use strict";
-function ElectricGrid(powerhouses, solarPanels, houses, powerLines) {
-    this.setElectricGrid(powerhouses, solarPanels, houses, powerLines);
+function EGrid() {
 }
-ElectricGrid.prototype.setElectricGrid = function(powerhouses, solarPanels, houses, powerLines){
-    this.powerhouses = powerhouses;
-    this.solarPanels = solarPanels;
-    this.houses = houses;
-    this.powerLines = powerLines;
+//Наследование
+EGrid.prototype = Object.create(Array.prototype);
+EGrid.prototype.constructor = EGrid;
+//Методы
+EGrid.prototype.addElement = function(obj){   
+    this.push(obj);
 }
-ElectricGrid.prototype.getFreeEnergyDay = function(){
+EGrid.prototype.addHouse = function() {
+    for (var i = 0; i < arguments.length; i++) {
+        var house = new House(arguments[i]);
+        this.addElement(house);
+    }
+}
+EGrid.prototype.addSolarPanel = function() {
+    for (var i = 0; i < arguments.length; i++) {
+        var solarPanel = new SolarPanel(arguments[i]);
+        this.addElement(solarPanel);
+    }
+}
+EGrid.prototype.addPowerhouse = function() {
+    for (var i = 0; i < arguments.length; i++) {
+        var powerhouse = new Powerhouse(arguments[i]);
+        this.addElement(powerhouse);
+    }
+}
+EGrid.prototype.addPowerLine = function () {
+    for (var i = 0; i < arguments.length; i++) {
+        var powerLine = new PowerLine(arguments[i].power, arguments[i].price);
+        this.addElement(powerLine);
+    }
+}
+EGrid.prototype.getEnergy = function(timeOfDay = 'day'){
+    timeOfDay = timeOfDay || 'day';
     var energy = 0;
-    for (var key in this.powerhouses) {
-        energy += powerhouses[key].getPower();
-    }
-    for (var key in this.solarPanels) {
-        energy += solarPanels[key].getPower();
-    }
-    for (var key in this.houses) {
-        energy -= houses[key].getApartments() * 4;
+    for (var i = 0; i < this.length; ++i) {
+        if (!this.hasOwnProperty(i)) continue;
+        if (this[i] instanceof PowerLine) continue;
+        energy += this[i].getPower(timeOfDay);
     }
     return energy;
 }
-ElectricGrid.prototype.getFreeEnergyNight = function(){
-    var energy = 0;
-    for (var key in this.powerhouses) {
-        energy += powerhouses[key].getPower();
+EGrid.prototype.calculateEnergy = function(timeOfDay = 'day'){
+    timeOfDay = timeOfDay || 'day';
+    var power = this.getEnergy(timeOfDay);
+    if (power > 0) {
+        return this.sellEnergy(power);
+    } else if (power < 0) {
+        return this.buyEnergy(power);
+    } else {
+       return {energy: 0, money: 0, message: "производимая мощность равна расходуемой."};
     }
-    for (var key in this.houses) {
-        energy -= houses[key].getApartments() * 1;
-    }
-    return energy;
 }
-ElectricGrid.prototype.sellFreeEnergyNight = function(){
-    var freePower = this.getFreeEnergyNight();
-    var money = this.powerLines.sellPower(freePower);
+EGrid.prototype.sellEnergy = function(power){
+    var arr = [];
+    var money = 0;
+    var sellPower = 0;
+    for (var i = 0; i < this.length; ++i) {
+        if (!this.hasOwnProperty(i)) continue;
+        if (!(this[i] instanceof PowerLine)) continue;
+        //линия с отрицательной мощностью купит энергию. Остальные нас не интересуют
+        if ( this[i].getPower() < 0 ) {
+            arr[i] = this[i];
+        }
+    }
+
+    arr.sort(sortBigPrice);
+
+    for (var key in arr) {
+        if (-(arr[key].getPower()) < power) {
+            money += arr[key].getPrice() * -(arr[key].getPower());
+            sellPower += -(arr[key].getPower());
+            power -= -(arr[key].getPower());
+        } else {
+            money += arr[key].getPrice() * power;
+            sellPower += power;
+            power = 0;
+            break;
+        }
+    }
+    return {energy: sellPower, 
+        money: money, 
+        message: 'продано '+sellPower+' энергии.'+' В получено '+money+' денег'};
+}
+EGrid.prototype.buyEnergy = function(power){
+    var arr = [];
+    var money = 0;
+    var buyPower = 0;
+    for (var i = 0; i < this.length; ++i) {
+        if (!this.hasOwnProperty(i)) continue;
+        if (!(this[i] instanceof PowerLine)) continue;
+        //линия с положительной мощностью купит энергию. Остальные нас не интересуют
+        if ( this[i].getPower() > 0 ) {
+            arr[i] = this[i];
+        }
+    }
+
+    arr.sort(sortSmallPrice);
+
+    for (var key in arr) {
+        if (arr[key].getPower() < -(power)) {
+            money += arr[key].getPrice() * arr[key].getPower();
+            buyPower += arr[key].getPower();
+            power = arr[key].getPower();
+        } else {
+            money += arr[key].getPrice() * -(power);
+            buyPower += -(power);
+            power = 0;
+            break;
+        }
+    }
+    return {energy: buyPower, money: money, 
+        message: 'закуплено '+buyPower+' энергии.'+ 
+        ' В потрачено '+money+' денег'};
 }
 
-function Generator(power){
+function ElementGrid(power){
     this.setPower(power);
 }
-Generator.prototype.setPower = function(power){
+ElementGrid.prototype.setPower = function(power){
     this._power = power;
 }
-Generator.prototype.getPower = function(power){
+ElementGrid.prototype.getPower = function(){
     return this._power;
 }
 
@@ -50,7 +130,7 @@ function Powerhouse(power) {
     this.setPower(power);
 }
 //Наследование
-Powerhouse.prototype = Object.create(Generator.prototype);
+Powerhouse.prototype = Object.create(ElementGrid.prototype);
 Powerhouse.prototype.constructor = Powerhouse;
 //Методы
 Powerhouse.prototype.setPower = function(power){
@@ -61,13 +141,12 @@ Powerhouse.prototype.setPower = function(power){
     }
 }
 
-
 //Конструктор
 function SolarPanel(power) {
     this.setPower(power);
 }
 //Наследование
-SolarPanel.prototype = Object.create(Generator.prototype);
+SolarPanel.prototype = Object.create(ElementGrid.prototype);
 SolarPanel.prototype.constructor = SolarPanel;
 //Методы
 SolarPanel.prototype.setPower = function(power){
@@ -77,11 +156,25 @@ SolarPanel.prototype.setPower = function(power){
         throw new Error("Солнечная панель должна вырабатывать от 1 и до 5 мегаватт днем");
     }
 }
+SolarPanel.prototype.getPower = function(timeOfDay = 'day'){
+    timeOfDay = timeOfDay || 'day';
+    if (timeOfDay == 'day'){
+        return this._power;
+    } else if (timeOfDay == 'night') {
+        return 0;
+    } else {
+        throw new Error("Время суток день - day или ночь - night");
+    }
+}
 
 
 function House(apartments) {
     this.setApartments(apartments);
 }
+//Наследование
+House.prototype = Object.create(ElementGrid.prototype);
+House.prototype.constructor = House;
+//Методы
 House.prototype.setApartments = function(apartments){
     if (( apartments >= 1 ) && ( apartments <= 400 )){
         this._apartments = apartments;
@@ -89,8 +182,15 @@ House.prototype.setApartments = function(apartments){
         throw new Error("В доме должно находится от 1 до 400 квартир");
     }
 }
-House.prototype.getApartments = function(apartments){
-    return this._apartments;
+House.prototype.getPower = function(timeOfDay='day'){
+    timeOfDay = timeOfDay || 'day';
+    if (timeOfDay == 'day'){
+        return this._apartments * -4;
+    } else if (timeOfDay == 'night') {
+        return this._apartments * -1;
+    } else{
+        throw new Error("Время суток день - day или ночь - night");
+    }
 }
 
 function PowerLine(power, price) {
@@ -105,61 +205,6 @@ PowerLine.prototype.getPower = function(){
 }
 PowerLine.prototype.getPrice = function(){
     return this._price;
-}
-
-function SolarPanels() {
-    for (var i = 0; i < arguments.length; i++) {
-        var solarPanels = new SolarPanel(arguments[i]);
-        this[i] = solarPanels;
-    }
-}
-function Houses() {
-    for (var i = 0; i < arguments.length; i++) {
-        var house = new House(arguments[i]);
-        this[i] = house;
-    }
-}
-function Powerhouses() {
-    for (var i = 0; i < arguments.length; i++) {
-        var powerhouse = new Powerhouse(arguments[i]);
-        this[i] = powerhouse;
-    }
-}
-function PowerLines() {
-    for (var i = 0; i < arguments.length; i++) {
-        var powerLine = new PowerLine(arguments[i].power, arguments[i].price);
-        this[i] = powerLine;
-    }
-}
-
-PowerLines.prototype.sellPower = function(power){
-    var arr = [];
-    var money = 0;
-    var sellPower = 0;
-    for (var key in this) {
-        console.log( this[key].getPower() );
-        //линия с отрицательной мощностью купит энергию. Остальные нас не интересуют
-        if ( this[key].getPower() < 0 ) {
-            arr[key] = this[key];
-        }
-    }
-
-    arr.sort(sortBigPrice);
-
-    for (var key in arr) {
-        if (arr[key].getPower() < power) {
-            money += arr[key].getPrice() * arr[key].getPower();
-            sellPower += arr[key].getPower();
-            power -= arr[key].getPower();
-        } else {
-            money += arr[key].getPrice() * power;
-            sellPower += power;
-            power = 0;
-            break;
-        }
-    }
-    alert('Можно продать '+sellPower+' энергии. В результате получим '+money+' денег');
-
 }
 
 function sortBigPrice(a, b) {

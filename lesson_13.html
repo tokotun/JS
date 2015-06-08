@@ -8,25 +8,24 @@
 </head>
 <body>
   <script> 
-
-    var powerhouses = new Powerhouses(5,10);
-
-    var solarPanels = new SolarPanels(5,3,5);
-
-    var houses = new Houses(2,5); 
-
+    var eGrid = new EGrid();
+    eGrid.addPowerhouse(15,5,4,4,7);
+    eGrid.addHouse(4,27,1);
+    eGrid.addSolarPanel(4,5,4,3,1);
     //power положительное значение означает избыток энергии на линии. Линия энергию продаёт
     //power отрицательное значение означает недостаток энергии на линии. Линия энергию покупает
-    var powerLines = new PowerLines({power: 30, price: 5}, {power: -10, price: 3}, {power: 15, price: 3});
+    eGrid.addPowerLine({power: -40, price: 5},{power: -1, price: 2},{power: 17, price: 6});
+    //console.log(eGrid);
 
+    alert(eGrid.getEnergy('day'));
+    var calculateEnergyDay = eGrid.calculateEnergy('day');
+    //console.log(calculateEnergyDay);
+    alert('Днем '+calculateEnergyDay.message);
 
-    var electricGrid = new ElectricGrid(powerhouses, solarPanels, houses, powerLines);
-
-    console.log(electricGrid);
-    //alert(electricGrid.getFreeEnergyDay());
-    //alert(electricGrid.getFreeEnergyNight());
-    alert(electricGrid.sellFreeEnergyNight());
-
+    alert(eGrid.getEnergy('night'));
+    var calculateEnergyNight = eGrid.calculateEnergy('night');
+    //console.log(calculateEnergyNight);
+    alert('Ночью '+calculateEnergyNight.message);
   </script>
 </body>
 

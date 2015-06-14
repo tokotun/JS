@@ -104,7 +104,7 @@ SolarPanel.prototype.constructor = SolarPanel;
 //Методы
 SolarPanel.prototype.setPower = function(power){
     if (( power >= 1 ) && ( power <= 5 )){
-        this._power = power;
+        ElementGrid.prototype.setPower.call(this, power);
     } else {
         throw new Error("Солнечная панель должна вырабатывать от 1 и до 5 мегаватт днем");
     }
@@ -150,7 +150,7 @@ function PowerLine(obj) {
     this.setPowerLine(obj.power, obj.price);
 }
 PowerLine.prototype.setPowerLine = function(power, price){
-    this._power = power;
+    ElementGrid.prototype.setPower.call(this, power);
     this._price = price;
 }
 PowerLine.prototype.getPower = function(){

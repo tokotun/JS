@@ -5,33 +5,6 @@ function EGrid() {
 EGrid.prototype = Object.create(Array.prototype);
 EGrid.prototype.constructor = EGrid;
 //Методы
-EGrid.prototype.addElement = function(obj){   
-    this.push(obj);
-}
-EGrid.prototype.addHouse = function() {
-    for (var i = 0; i < arguments.length; i++) {
-        var house = new House(arguments[i]);
-        this.addElement(house);
-    }
-}
-EGrid.prototype.addSolarPanel = function() {
-    for (var i = 0; i < arguments.length; i++) {
-        var solarPanel = new SolarPanel(arguments[i]);
-        this.addElement(solarPanel);
-    }
-}
-EGrid.prototype.addPowerhouse = function() {
-    for (var i = 0; i < arguments.length; i++) {
-        var powerhouse = new Powerhouse(arguments[i]);
-        this.addElement(powerhouse);
-    }
-}
-EGrid.prototype.addPowerLine = function () {
-    for (var i = 0; i < arguments.length; i++) {
-        var powerLine = new PowerLine(arguments[i].power, arguments[i].price);
-        this.addElement(powerLine);
-    }
-}
 EGrid.prototype.getEnergy = function(timeOfDay = 'day'){
     timeOfDay = timeOfDay || 'day';
     var energy = 0;
@@ -46,74 +19,54 @@ EGrid.prototype.calculateEnergy = function(timeOfDay = 'day'){
     timeOfDay = timeOfDay || 'day';
     var power = this.getEnergy(timeOfDay);
     if (power > 0) {
-        return this.sellEnergy(power);
+        return this.tradeEnergy(power, 'sell');
     } else if (power < 0) {
-        return this.buyEnergy(power);
+        return this.tradeEnergy(power, 'buy');
     } else {
-       return {energy: 0, money: 0, message: "производимая мощность равна расходуемой."};
+       return "производимая мощность равна расходуемой.";
     }
 }
-EGrid.prototype.sellEnergy = function(power){
+//trade принимает значения 'buy' или 'sell'
+EGrid.prototype.tradeEnergy = function(power, trade){
     var arr = [];
     var money = 0;
-    var sellPower = 0;
+    var power = Math.abs(power);
+    var tradePower = 0;
+    var message;
+    var minPower;
     for (var i = 0; i < this.length; ++i) {
         if (!this.hasOwnProperty(i)) continue;
         if (!(this[i] instanceof PowerLine)) continue;
-        //линия с отрицательной мощностью купит энергию. Остальные нас не интересуют
-        if ( this[i].getPower() < 0 ) {
-            arr[i] = this[i];
+        if (((trade ==  'sell') && ( this[i].getPower() < 0 )) || ((trade ==  'buy') && ( this[i].getPower() > 0 ))){
+            arr.push(this[i]);
         }
+
     }
 
-    arr.sort(sortBigPrice);
+    if (trade ==  'sell') arr.sort(
+            function (a, b) {
+                return b.getPrice() - a.getPrice();
+            });
+    if (trade ==  'buy') arr.sort(
+            function (a, b) {
+                return a.getPrice() - b.getPrice();
+            });
 
-    for (var key in arr) {
-        if (-(arr[key].getPower()) < power) {
-            money += arr[key].getPrice() * -(arr[key].getPower());
-            sellPower += -(arr[key].getPower());
-            power -= -(arr[key].getPower());
+
+    for (var i = 0; i < arr.length; ++i) {
+        if (power > 0){
+            minPower = Math.min(Math.abs(arr[i].getPower()), Math.abs(power));
+            money += Math.abs(arr[i].getPrice() * minPower);
+            tradePower += Math.abs(minPower);
+            power = -Math.abs(minPower);
         } else {
-            money += arr[key].getPrice() * power;
-            sellPower += power;
-            power = 0;
             break;
         }
     }
-    return {energy: sellPower, 
-        money: money, 
-        message: 'продано '+sellPower+' энергии.'+' В получено '+money+' денег'};
-}
-EGrid.prototype.buyEnergy = function(power){
-    var arr = [];
-    var money = 0;
-    var buyPower = 0;
-    for (var i = 0; i < this.length; ++i) {
-        if (!this.hasOwnProperty(i)) continue;
-        if (!(this[i] instanceof PowerLine)) continue;
-        //линия с положительной мощностью купит энергию. Остальные нас не интересуют
-        if ( this[i].getPower() > 0 ) {
-            arr[i] = this[i];
-        }
-    }
 
-    arr.sort(sortSmallPrice);
-
-    for (var key in arr) {
-        if (arr[key].getPower() < -(power)) {
-            money += arr[key].getPrice() * arr[key].getPower();
-            buyPower += arr[key].getPower();
-            power = arr[key].getPower();
-        } else {
-            money += arr[key].getPrice() * -(power);
-            buyPower += -(power);
-            power = 0;
-            break;
-        }
-    }
-    return {energy: buyPower, money: money, 
-        message: 'закуплено '+buyPower+' энергии.'+ 
-        ' В потрачено '+money+' денег'};
+    if (trade ==  'sell') message = 'продано '+tradePower+' энергии. Получено '+money+' денег.';
+    if (trade ==  'buy')  message = 'закуплено '+tradePower+' энергии. Потрачено '+money+' денег.';
+    return message;
 }
 
 function ElementGrid(power){
@@ -127,7 +80,7 @@ ElementGrid.prototype.getPower = function(){
 }
 
 function Powerhouse(power) {
-    this.setPower(power);
+    ElementGrid.call(this, power);
 }
 //Наследование
 Powerhouse.prototype = Object.create(ElementGrid.prototype);
@@ -135,7 +88,7 @@ Powerhouse.prototype.constructor = Powerhouse;
 //Методы
 Powerhouse.prototype.setPower = function(power){
     if (( power >= 1 ) && ( power <= 100 )){
-        this._power = power;
+        ElementGrid.prototype.setPower.call(this, power);
     } else {
         throw new Error("Станция должна вырабатывать от 1 до 100 мегаватт");
     }
@@ -143,7 +96,7 @@ Powerhouse.prototype.setPower = function(power){
 
 //Конструктор
 function SolarPanel(power) {
-    this.setPower(power);
+    ElementGrid.call(this, power);
 }
 //Наследование
 SolarPanel.prototype = Object.create(ElementGrid.prototype);
@@ -193,8 +146,8 @@ House.prototype.getPower = function(timeOfDay='day'){
     }
 }
 
-function PowerLine(power, price) {
-    this.setPowerLine(power, price);
+function PowerLine(obj) {
+    this.setPowerLine(obj.power, obj.price);
 }
 PowerLine.prototype.setPowerLine = function(power, price){
     this._power = power;
@@ -207,9 +160,25 @@ PowerLine.prototype.getPrice = function(){
     return this._price;
 }
 
-function sortBigPrice(a, b) {
-    return b.getPrice() - a.getPrice();
-}
-function sortSmallPrice(a, b) {
-    return a.getPrice() - b.getPrice();
+function addElement(obj, className, arr) {   
+    for (var i = 0; i < arr.length; i++) {
+        //не нагуглил  фабрику для разных обьектов :( 
+        switch (className){
+            case 'Powerhouse':
+                var element = new Powerhouse(arr[i]);
+                break;
+            case 'House':
+                var element = new House(arr[i]);
+                break;
+            case 'SolarPanel':
+                var element = new SolarPanel(arr[i]);
+                break;
+            case 'PowerLine':
+                var element = new PowerLine(arr[i]);
+                break; 
+            default:
+                throw new Error("Нет такого класса.");
+        }
+        obj.push(element);
+    }
 }

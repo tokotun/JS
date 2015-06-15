@@ -5,17 +5,21 @@ function EGrid() {
 EGrid.prototype = Object.create(Array.prototype);
 EGrid.prototype.constructor = EGrid;
 //Методы
-EGrid.prototype.getEnergy = function(timeOfDay = 'day'){
+EGrid.prototype.getEnergy = function(timeOfDay){
     timeOfDay = timeOfDay || 'day';
     var energy = 0;
     for (var i = 0; i < this.length; ++i) {
-        if (!this.hasOwnProperty(i)) continue;
-        if (this[i] instanceof PowerLine) continue;
+        if (!this.hasOwnProperty(i)) {
+            continue;
+        }
+        if (this[i] instanceof PowerLine) {
+            continue;
+        }
         energy += this[i].getPower(timeOfDay);
     }
     return energy;
-}
-EGrid.prototype.calculateEnergy = function(timeOfDay = 'day'){
+};
+EGrid.prototype.calculateEnergy = function(timeOfDay){
     timeOfDay = timeOfDay || 'day';
     var power = this.getEnergy(timeOfDay);
     if (power > 0) {
@@ -23,61 +27,77 @@ EGrid.prototype.calculateEnergy = function(timeOfDay = 'day'){
     } else if (power < 0) {
         return this.tradeEnergy(power, 'buy');
     } else {
-       return "производимая мощность равна расходуемой.";
+       return {message: 'н/д', tradePower: 0, money: 0};
     }
-}
+};
 //trade принимает значения 'buy' или 'sell'
 EGrid.prototype.tradeEnergy = function(power, trade){
-    var arr = [];
     var money = 0;
-    var power = Math.abs(power);
     var tradePower = 0;
-    var message;
     var minPower;
+    var message;
+    if (trade ==  'sell') {
+        message = 'продано';
+    } else if (trade ==  'buy')  {
+        message = 'закуплено';
+    } else {
+        throw new Error("Значение trade должно быть равно sell или buy");
+    }
+
+    var arr = this.getPowerLinesTrade(trade);
+
+    var p = Math.abs(power);
+    for (var i = 0; i < arr.length; ++i) {   
+        if (p > 0){
+            minPower = Math.min(Math.abs(arr[i].getPower()), Math.abs(p));
+            money += Math.abs(arr[i].getPrice() * minPower);   
+            tradePower += Math.abs(minPower);
+            p -= Math.abs(minPower);
+        } else {
+            break;
+        } 
+    }
+
+    return {message: message, tradePower: tradePower, money: money};
+};
+EGrid.prototype.getPowerLinesTrade = function(trade){
+    var arr = [];
     for (var i = 0; i < this.length; ++i) {
-        if (!this.hasOwnProperty(i)) continue;
-        if (!(this[i] instanceof PowerLine)) continue;
+        if (!this.hasOwnProperty(i)) {
+            continue;
+        }
+        if (!(this[i] instanceof PowerLine)) {
+            continue;
+        }
         if (((trade ==  'sell') && ( this[i].getPower() < 0 )) || ((trade ==  'buy') && ( this[i].getPower() > 0 ))){
             arr.push(this[i]);
         }
-
     }
 
-    if (trade ==  'sell') arr.sort(
-            function (a, b) {
-                return b.getPrice() - a.getPrice();
-            });
-    if (trade ==  'buy') arr.sort(
-            function (a, b) {
-                return a.getPrice() - b.getPrice();
-            });
-
-
-    for (var i = 0; i < arr.length; ++i) {
-        if (power > 0){
-            minPower = Math.min(Math.abs(arr[i].getPower()), Math.abs(power));
-            money += Math.abs(arr[i].getPrice() * minPower);
-            tradePower += Math.abs(minPower);
-            power = -Math.abs(minPower);
-        } else {
-            break;
-        }
+    if (trade ==  'sell') {
+        arr.sort( function (a, b) {
+            return b.getPrice() - a.getPrice();
+        });
+    } else if (trade ==  'buy') {
+        arr.sort( function (a, b) {
+            return a.getPrice() - b.getPrice();
+        });
+    } else {
+        throw new Error("Значение trade должно быть равно sell или buy");
     }
+    return arr;
+};
 
-    if (trade ==  'sell') message = 'продано '+tradePower+' энергии. Получено '+money+' денег.';
-    if (trade ==  'buy')  message = 'закуплено '+tradePower+' энергии. Потрачено '+money+' денег.';
-    return message;
-}
 
 function ElementGrid(power){
     this.setPower(power);
 }
 ElementGrid.prototype.setPower = function(power){
     this._power = power;
-}
+};
 ElementGrid.prototype.getPower = function(){
     return this._power;
-}
+};
 
 function Powerhouse(power) {
     ElementGrid.call(this, power);
@@ -92,7 +112,7 @@ Powerhouse.prototype.setPower = function(power){
     } else {
         throw new Error("Станция должна вырабатывать от 1 до 100 мегаватт");
     }
-}
+};
 
 //Конструктор
 function SolarPanel(power) {
@@ -108,8 +128,8 @@ SolarPanel.prototype.setPower = function(power){
     } else {
         throw new Error("Солнечная панель должна вырабатывать от 1 и до 5 мегаватт днем");
     }
-}
-SolarPanel.prototype.getPower = function(timeOfDay = 'day'){
+};
+SolarPanel.prototype.getPower = function(timeOfDay){
     timeOfDay = timeOfDay || 'day';
     if (timeOfDay == 'day'){
         return this._power;
@@ -118,7 +138,7 @@ SolarPanel.prototype.getPower = function(timeOfDay = 'day'){
     } else {
         throw new Error("Время суток день - day или ночь - night");
     }
-}
+};
 
 
 function House(apartments) {
@@ -134,8 +154,8 @@ House.prototype.setApartments = function(apartments){
     } else {
         throw new Error("В доме должно находится от 1 до 400 квартир");
     }
-}
-House.prototype.getPower = function(timeOfDay='day'){
+};
+House.prototype.getPower = function(timeOfDay){
     timeOfDay = timeOfDay || 'day';
     if (timeOfDay == 'day'){
         return this._apartments * -4;
@@ -144,41 +164,30 @@ House.prototype.getPower = function(timeOfDay='day'){
     } else{
         throw new Error("Время суток день - day или ночь - night");
     }
-}
+};
 
-function PowerLine(obj) {
-    this.setPowerLine(obj.power, obj.price);
-}
-PowerLine.prototype.setPowerLine = function(power, price){
+function PowerLine(power, price) {
     ElementGrid.prototype.setPower.call(this, power);
-    this._price = price;
+    this.setPrice(price);
 }
+PowerLine.prototype.setPrice = function(price){
+    this._price = price;
+};
 PowerLine.prototype.getPower = function(){
     return this._power;
-}
+};
 PowerLine.prototype.getPrice = function(){
     return this._price;
-}
+};
 
-function addElement(obj, className, arr) {   
+function addElement(obj, functionConstructor, arr) {   
     for (var i = 0; i < arr.length; i++) {
-        //не нагуглил  фабрику для разных обьектов :( 
-        switch (className){
-            case 'Powerhouse':
-                var element = new Powerhouse(arr[i]);
-                break;
-            case 'House':
-                var element = new House(arr[i]);
-                break;
-            case 'SolarPanel':
-                var element = new SolarPanel(arr[i]);
-                break;
-            case 'PowerLine':
-                var element = new PowerLine(arr[i]);
-                break; 
-            default:
-                throw new Error("Нет такого класса.");
-        }
+        var element
+        if (arr[i] instanceof Object) {
+            element = new functionConstructor(arr[i].power, arr[i].price);   
+        } else {
+            element = new functionConstructor(arr[i]);   
+        } 
         obj.push(element);
     }
 }

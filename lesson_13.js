@@ -182,7 +182,7 @@ PowerLine.prototype.getPrice = function(){
 
 function addElement(obj, functionConstructor, arr) {   
     for (var i = 0; i < arr.length; i++) {
-        var element
+        var element;
         if (arr[i] instanceof Object) {
             element = new functionConstructor(arr[i].power, arr[i].price);   
         } else {
